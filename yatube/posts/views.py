@@ -1,9 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post, Group, User
 from django.core.paginator import Paginator
-import datetime
-from django.views.generic.base import TemplateView
-from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from .forms import PostForm
 
@@ -66,8 +63,6 @@ def post_create(request):
     if request.method == 'POST':
         form = PostForm(request.POST)
         if form.is_valid():
-            text = form.cleaned_data['text']
-            group = form.cleaned_data['group']
             post = form.save(commit=False)  # записывает,но не сохраняет
             post.author = request.user
             post.save()
