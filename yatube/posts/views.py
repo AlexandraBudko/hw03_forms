@@ -5,9 +5,12 @@ from django.contrib.auth.decorators import login_required
 from .forms import PostForm
 
 
+posts_on_page = 10
+
+
 def index(request):
-    post_list = Post.objects.all().order_by('-pub_date')
-    paginator = Paginator(post_list, 10)
+    post_list = Post.objects.all()
+    paginator = Paginator(post_list, posts_on_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
@@ -18,8 +21,8 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.order_by('-pub_date')
-    paginator = Paginator(posts, 10)
+    posts = group.posts.all()
+    paginator = Paginator(posts, posts_on_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
@@ -31,16 +34,11 @@ def group_posts(request, slug):
 
 def profile(request, username):
     user_name = get_object_or_404(User, username=username)
-    post_list1 = Post.objects.all().filter(author__exact=user_name)
-    post_list = post_list1.order_by('-pub_date')
-    count_posts = post_list.count()
-    paginator = Paginator(post_list, 10)
+    paginator = Paginator(user_name.posts.all(), posts_on_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
         'user_name': user_name,
-        'post_list': post_list,
-        'count_posts': count_posts,
         'page_obj': page_obj,
     }
     return render(request, 'posts/profile.html', context)
@@ -49,9 +47,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     count_posts = Post.objects.all().filter(author__exact=post.author).count
-    title = 'Пост'
     context = {
-        'title': title,
         'post': post,
         'count_posts': count_posts,
     }
@@ -74,14 +70,13 @@ def post_create(request):
 @login_required()
 def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
+    form = PostForm(request.POST or None, instance=post)
     if post.author != request.user:
         return redirect('posts:post_detail', post_id=post.id)
     if request.method == 'POST':
-        form = PostForm(request.POST or None, instance=post)
         if form.is_valid():
             form.save()
             return redirect('posts:post_detail', post_id=post.id)
-    form = PostForm(request.POST or None, instance=post)
     context = {
         'form': form,
         'post': post,
