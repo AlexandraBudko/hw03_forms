@@ -5,41 +5,39 @@ from django.contrib.auth.decorators import login_required
 from .forms import PostForm
 
 
-posts_on_page = 10
+POSTS_ON_PAGE = 10
+
+
+def pgn_list(request, post_list):
+    paginator = Paginator(post_list, POSTS_ON_PAGE)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)
 
 
 def index(request):
     post_list = Post.objects.all()
-    paginator = Paginator(post_list, posts_on_page)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
     context = {
-        'page_obj': page_obj,
+        'page_obj': pgn_list(request, post_list),
     }
     return render(request, 'posts/index.html', context)
 
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    posts = group.posts.all()
-    paginator = Paginator(posts, posts_on_page)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = group.posts.all()
     context = {
         'group': group,
-        'page_obj': page_obj,
+        'page_obj': pgn_list(request, post_list),
     }
     return render(request, 'posts/group_list.html', context)
 
 
 def profile(request, username):
     user_name = get_object_or_404(User, username=username)
-    paginator = Paginator(user_name.posts.all(), posts_on_page)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = user_name.posts.all()
     context = {
         'user_name': user_name,
-        'page_obj': page_obj,
+        'page_obj': pgn_list(request, post_list),
     }
     return render(request, 'posts/profile.html', context)
 
